@@ -1,0 +1,44 @@
+FROM jupyter/pyspark-notebook:python-3.8
+
+USER root
+
+RUN apt-get update && apt-get install -y wget openjdk-8-jdk
+
+# --- Hadoop ---
+RUN wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz && \
+    tar -xzvf hadoop-3.3.6.tar.gz -C /opt/ && \
+    mv /opt/hadoop-3.3.6 /opt/hadoop && \
+    rm hadoop-3.3.6.tar.gz
+
+ENV HADOOP_HOME=/opt/hadoop
+ENV HADOOP_CONF_DIR=/etc/hadoop
+
+# --- Spark 3.5.3 из архива Apache ---
+# ВАРИАНТ 1 (если без суффикса scala):
+RUN wget https://archive.apache.org/dist/spark/spark-3.5.3/spark-3.5.3-bin-hadoop3.tgz && \
+    tar -xzvf spark-3.5.3-bin-hadoop3.tgz -C /opt/ && \
+    mv /opt/spark-3.5.3-bin-hadoop3 /opt/spark && \
+    rm spark-3.5.3-bin-hadoop3.tgz
+
+# # ВАРИАНТ 2 (если архив называется с scala):
+# RUN wget https://archive.apache.org/dist/spark/spark-3.5.3/spark-3.5.3-bin-hadoop3-scala2.12.tgz && \
+#     tar -xzvf spark-3.5.3-bin-hadoop3-scala2.12.tgz -C /opt/ && \
+#     mv /opt/spark-3.5.3-bin-hadoop3-scala2.12 /opt/spark && \
+#     rm spark-3.5.3-bin-hadoop3-scala2.12.tgz
+
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$PATH:$HADOOP_HOME/bin:$SPARK_HOME/bin
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
+
+RUN pip install --no-cache-dir \
+    pyspark==3.5.3 \
+    pyarrow \
+    pandas \
+    numpy \
+    matplotlib \
+    seaborn \
+    findspark
+
+COPY ./hadoop-config/* /opt/hadoop
+
+CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=fijma"]
