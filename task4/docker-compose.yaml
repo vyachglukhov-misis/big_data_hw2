@@ -19,6 +19,7 @@ services:
       - ./config.env
     volumes:
       - namenode_data:/hadoop/dfs/name
+      - ./hadoop-config:/opt/hadoop/etc/hadoop
     environment:
       ENSURE_NAMENODE_DIR: "/hadoop/dfs/name"
     healthcheck:
@@ -37,6 +38,7 @@ services:
     command: ["hdfs", "datanode"]
     volumes:
       - datanode1_data:/hadoop/dfs/data
+      - ./hadoop-config:/opt/hadoop/etc/hadoop
     env_file:
       - ./config.env
     depends_on:
@@ -53,6 +55,7 @@ services:
     command: ["hdfs", "datanode"]
     volumes:
       - datanode2_data:/hadoop/dfs/data
+      - ./hadoop-config:/opt/hadoop/etc/hadoop
     env_file:
       - ./config.env
     depends_on:
@@ -80,6 +83,8 @@ services:
         echo 'HDFS initialization complete.'
       "
     restart: "no"
+    volumes:
+      - ./hadoop-config:/opt/hadoop/etc/hadoop
 
   postgres:
     networks:
@@ -87,7 +92,7 @@ services:
     image: postgres:11
     hostname: hive-metastore-postgres
     ports:
-      - "5432:5432"
+      - "5433:5433"
     environment:
       - POSTGRES_USER=hive
       - POSTGRES_PASSWORD=hive
@@ -115,11 +120,11 @@ services:
       # HIVE_CUSTOM_CONF_DIR: /hive_custom_conf
       SERVICE_OPTS: >-
         -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver
-        -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/metastore
+        -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5433/metastore
         -Djavax.jdo.option.ConnectionUserName=hive
         -Djavax.jdo.option.ConnectionPassword=hive            
     volumes:
-      - /Users/boldyrevn/Downloads/postgresql-42.7.7.jar:/opt/hive/lib/postgres.jar
+      - ./postgresql-42.7.7.jar:/opt/hive/lib/postgres.jar
 
   # ---------------------- #
   # Spark Master
@@ -233,6 +238,7 @@ services:
       HADOOP_CONF_DIR: /etc/hadoop
       HADOOP_USER_NAME: hadoop
       JAVA_HOME: /usr/lib/jvm/java-8-openjdk-arm64
+      PYSPARK_SUBMIT_ARGS: "--master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.3 pyspark-shell"
     volumes:
       - ./hadoop-config:/etc/hadoop:ro
       - ./notebooks:/home/jovyan/notebooks
