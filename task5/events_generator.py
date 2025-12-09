@@ -2,6 +2,7 @@ import time
 import json
 import random
 from confluent_kafka import Producer
+import uuid
 
 conf = {
     'bootstrap.servers': 'localhost:29092', 
@@ -31,10 +32,11 @@ def generate_events():
 
         event_json = json.dumps(event)
 
-        producer.produce('topic_name', event_json.encode('utf-8'), callback=delivery_report) # название вашего топика
+        producer.produce('transactions', event_json.encode('utf-8'), callback=delivery_report) # название вашего топика
 
         producer.poll(0)
         time.sleep(1)
 
 if __name__ == "__main__":
+    print(1)
     generate_events()
